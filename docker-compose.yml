@@ -1,6 +1,29 @@
-version: '3.8'
+version: "3.8"
 
 services:
+    # traefik:
+    #     image: "traefik:v2.2.5"
+    #     command:
+    #         - "--log.level=DEBUG"
+    #         - "--api.insecure=true"
+    #         # Enabling docker provider
+    #         - "--providers.docker=true"
+    #         # Do not expose containers unless explicitly told so
+    #         - "--providers.docker.exposedbydefault=false"
+    #         - "--entrypoints.web.address=:80"
+    #     networks:
+    #         - jarvis-network
+    #     ports:
+    #         - "80:80"
+    #         - "8080:8080"
+    #     labels:
+    #         - "traefik.enable=true"
+    #         - "traefik.http.routers.traefik.entrypoints=web"
+    #         - "traefik.http.routers.traefik.rule=Host(`monitor.localhost`)"
+    #         - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+    #     volumes:
+    #         - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
     phpmyadmin:
         container_name: myadmin
         environment:
@@ -9,8 +32,32 @@ services:
             - PMA_USER=root
             - PMA_PASSWORD=root
         network_mode: jarvis-network
-        ports:
-            - '9000:80'
+        expose:
+            - 80
         image: phpmyadmin/phpmyadmin
         volumes:
             - ./config.user.inc.php:/etc/phpmyadmin/config.user.inc.php
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.myadmin.rule=Host(`pma.localhost`)"
+            - "traefik.http.routers.myadmin.tls=true"
+            - "traefik.http.routers.myadmin.entryPoints=web,websecure"
+
+    phpmyadmin_mail:
+        container_name: myadmin_mail
+        environment:
+            - PMA_ARBITRARY=1
+            - PMA_HOST=db_mail
+            - PMA_USER=root
+            - PMA_PASSWORD=root
+        network_mode: jarvis-network
+        expose:
+            - 80
+        image: phpmyadmin/phpmyadmin
+        volumes:
+            - ./config.user.inc.php:/etc/phpmyadmin/config.user.inc.php
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.myadmin_mail.rule=Host(`pmamail.localhost`)"
+            - "traefik.http.routers.myadmin_mail.tls=true"
+            - "traefik.http.routers.myadmin_mail.entrypoints=web,websecure"
